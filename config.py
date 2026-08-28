@@ -5,6 +5,11 @@ PROJECT_ROOT = os.getcwd()
 INPUT_DIR = os.path.join(PROJECT_ROOT, "raw_data")
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "LoRA_Curated_Dataset")
 
+# --- Global & Task Registry ---
+GLOBAL_POSE_CACHE_FILE = os.path.join(PROJECT_ROOT, "output", "registry", "global_pose_audit.json")
+TASK_LIST_DIR = os.path.join(PROJECT_ROOT, "output", "task_lists")
+
+
 # --- Model Variables ---
 MODEL_NAME = "buffalo_l"
 INSIGHTFACE_MODEL_DIR = os.path.expanduser(f"~/.insightface/models/{MODEL_NAME}")

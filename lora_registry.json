@@ -1,0 +1,46 @@
+{
+    "faces": [
+        {
+            "name": "Tzuyu",
+            "face_id": "Tzuyu",
+            "lora_file": "Tzuyu.safetensors",
+            "trigger_word": "Tzuyu",
+            "r_gan_used": true,
+            "training_date": "2026-08-24",
+            "evaluation_score": null,
+            "dynamic_baseline": 44.85,
+            "golden_rules": {
+                "scene_standard": {
+                    "best_identifier": "INP_BE3A2353",
+                    "lora_scale": 1.1,
+                    "denoising": 0.8,
+                    "max_score": 73.31508660484258
+                },
+                "scene_close_up": {
+                    "best_identifier": "T2I_952226A8",
+                    "lora_scale": 1.2,
+                    "denoising": 0.5,
+                    "max_score": 86.399747956181
+                },
+                "scene_wide": {
+                    "best_identifier": "T2I_7542545B",
+                    "lora_scale": 1.2,
+                    "denoising": 0.5,
+                    "max_score": 45.95630753147042
+                },
+                "scene_low_light": {
+                    "best_identifier": "T2I_35B12FEE",
+                    "lora_scale": 1.2,
+                    "denoising": 0.5,
+                    "max_score": 72.96534324390257
+                },
+                "scene_profile": {
+                    "best_identifier": "T2I_EF170CB6",
+                    "lora_scale": 1.2,
+                    "denoising": 0.5,
+                    "max_score": 68.63441332461733
+                }
+            }
+        }
+    ]
+}
