@@ -8,6 +8,7 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, "LoRA_Curated_Dataset")
 # --- Global & Task Registry ---
 GLOBAL_POSE_CACHE_FILE = os.path.join(PROJECT_ROOT, "output", "registry", "global_pose_audit.json")
 TASK_LIST_DIR = os.path.join(PROJECT_ROOT, "output", "task_lists")
+MAPPING_JSON_PATH = r"C:\Users\HP\project\AI_FaceRes\mapping.json"
 
 
 # --- Model Variables ---

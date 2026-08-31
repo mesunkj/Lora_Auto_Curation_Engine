@@ -12,6 +12,7 @@ import numpy as np
 # =========================================================================
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
+import re
 
 def get_face_ids_from_registry(registry_path):
     if not os.path.exists(registry_path):
@@ -92,6 +93,43 @@ def pre_flight_checks(args):
             input_dir = user_input
     print(f"✅ [檢查通過] 目標底圖目錄存在: {input_dir}")
     
+    # 2.5 進行 mapping.json 查表與檔名安檢
+    mapping_path = config.MAPPING_JSON_PATH
+    mapping_data = {}
+    if os.path.exists(mapping_path):
+        try:
+            with open(mapping_path, "r", encoding="utf-8") as f:
+                mapping_data = json.load(f)
+        except Exception as e:
+            print(f"⚠️ [警告] 讀取 mapping.json 失敗: {e}")
+    else:
+        print(f"⚠️ [警告] 找不到 mapping.json: {mapping_path}")
+
+    # 取得目錄下的圖片並驗證檔名
+    all_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.jpg', '.png', '.jpeg'))]
+    invalid_files = []
+    file_face_indices = {} # 記錄合格檔案的 face_index
+
+    # 原始底圖檔名即為 mapping_data 的 key (例如 model_001.jpg)
+    for f in all_files:
+        if f in mapping_data:
+            file_face_indices[f] = mapping_data[f]
+        else:
+            invalid_files.append(f)
+            
+    if invalid_files:
+        print(f"\n⚠️ 發現 {len(invalid_files)} 張圖片在 mapping.json 中找不到對應的臉部索引！")
+        choice = input("請問要中斷執行並匯出錯誤 Log (輸入 'Q')，還是忽略這些錯誤檔案繼續 (輸入 'C')？ ").strip().upper()
+        if choice == 'Q':
+            log_path = os.path.join(config.PROJECT_ROOT, "missing_mapping_log.txt")
+            with open(log_path, "w", encoding="utf-8") as lf:
+                for inv_f in invalid_files:
+                    lf.write(inv_f + "\n")
+            print(f"🛑 已中斷執行。錯誤清單已匯出至 {log_path}")
+            sys.exit(1)
+        else:
+            print("▶️ 將忽略這些錯誤檔案，繼續執行。")
+    
     # 3. 確保 Global Cache 與 Task List 目錄存在
     os.makedirs(os.path.dirname(config.GLOBAL_POSE_CACHE_FILE), exist_ok=True)
     os.makedirs(config.TASK_LIST_DIR, exist_ok=True)
@@ -102,7 +140,8 @@ def pre_flight_checks(args):
     return {
         "input_dir": input_dir,
         "face_id": selected_fid,
-        "registry_path": registry_path
+        "registry_path": registry_path,
+        "file_face_indices": file_face_indices
     }
 
 def load_global_cache():
@@ -184,8 +223,10 @@ def run_auditor(run_config):
     face_cache = cache[face_id]
     accepted_paths = set(face_cache["accept"])
     rejected_paths = set(face_cache["reject"])
+    file_face_indices = run_config.get("file_face_indices", {})
     
-    all_files = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.lower().endswith(('.jpg', '.png', '.jpeg'))]
+    # 僅盤點合格且存在於 file_face_indices 的檔案
+    all_files = [os.path.join(input_dir, f) for f in file_face_indices.keys()]
     
     history_accept = []
     history_reject = []
@@ -281,8 +322,17 @@ def run_auditor(run_config):
                  log_f.write(f"❌ [Reject] {fpath} -> 原因: 找不到人臉\n")
                  continue
                  
-            # 只取最明顯的人臉做檢查
-            face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
+            # 取得該圖片在 mapping.json 中對應的目標臉部 Index
+            fname = os.path.basename(fpath)
+            target_face_idx = file_face_indices.get(fname, 0)
+            
+            if target_face_idx < 0 or target_face_idx >= len(faces):
+                 new_reject.append(fpath)
+                 log_f.write(f"❌ [Reject] {fpath} -> 原因: 找不到對應的臉部索引 {target_face_idx} (僅偵測到 {len(faces)} 張臉)\n")
+                 continue
+                 
+            # 直接選取指定的目標臉
+            face = faces[target_face_idx]
             
             # 計算各項數值
             h, w_img = img.shape[:2]
